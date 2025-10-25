@@ -2,19 +2,19 @@ import { useEffect, useRef, useState } from "react";
 import { Slider } from "antd";
 // import { Slider, type SliderChangeEvent } from "primereact/slider";
 import "primereact/resources/themes/lara-light-cyan/theme.css";
+import eraseIcon from "./assets/svg/Erase.svg";
+import writeIcon from "./assets/svg/write.svg";
+import mobileScrollIcon from "./assets/PNG/mobile-Scroll.png";
 function App() {
   const myCanvas = useRef<HTMLCanvasElement>(null);
   const d = useRef(false);
   const [isErasing, setIsErasing] = useState(false);
-  const [penSizeValue, setPenSizeValue] = useState<number >(
-    5
-  );
-  
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [penSizeValue, setPenSizeValue] = useState<number>(5);
 
   useEffect(() => {
     const canvasElement = myCanvas.current;
     const ctx = canvasElement?.getContext("2d");
-   if (canvasElement) canvasElement.style.touchAction = "none";
     if (!ctx || !canvasElement) return;
 
     let lastPos = { x: 0, y: 0 };
@@ -46,8 +46,13 @@ function App() {
     };
 
     const handlePointerDown = (e: PointerEvent) => {
+      if (isScrolling && canvasElement) {
+        canvasElement.style.touchAction = "auto";
+        return;
+      }
       d.current = true;
       isFirstPoint = true;
+      if (canvasElement) canvasElement.style.touchAction = "none";
 
       if (isErasing) {
         erase(e.offsetX, e.offsetY);
@@ -57,6 +62,11 @@ function App() {
     };
 
     const handlePointerMove = (e: PointerEvent) => {
+      if (isScrolling && canvasElement) {
+        canvasElement.style.touchAction = "auto";
+        return;
+      }
+      if (canvasElement) canvasElement.style.touchAction = "none";
       if (!d.current) return;
 
       if (isErasing) {
@@ -88,10 +98,11 @@ function App() {
       canvasElement.removeEventListener("pointermove", handlePointerMove);
       canvasElement.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [isErasing, penSizeValue]);
+  }, [isErasing, penSizeValue, isScrolling]);
 
   const toggleEraseMode = () => {
     setIsErasing((prev) => !prev);
+    setIsScrolling(false);
   };
 
   const clearCanvas = () => {
@@ -102,20 +113,37 @@ function App() {
   };
 
   return (
-    <div>
-      <div className=" flex gap-5   bg-red-70" style={{ marginBottom: "10px" }}>
-        <button onClick={toggleEraseMode}>
-          {isErasing ? "✏️ Draw Mode" : "🧹 Erase Mode"}
+    <div className="relative overflow-auto">
+      <div
+        className="fixed top-0 bg-gray-400 flex gap-7 sm:gap-10 h-10 pl-10 items-center  bg-red-70"
+        style={{ marginBottom: "10px" }}
+      >
+        <button
+          onClick={toggleEraseMode}
+          className="border border-gray-200 p-1 rounded-sm"
+        >
+          <img src={isErasing ? writeIcon : eraseIcon} alt="" />
+          {/* {isErasing ? "✏️ Draw Mode" : "🧹 Erase Mode"} */}
         </button>
-        <button onClick={clearCanvas} style={{ marginLeft: "10px" }}>
+        <button
+          onClick={() => setIsScrolling(true)}
+          className="border border-gray-200 p-1 rounded-sm"
+        >
+          <img className="h-6 w-6 " src={mobileScrollIcon} alt="" />
+        </button>
+        <button
+          onClick={clearCanvas}
+          className=" border border-gray-200  p-1 rounded-sm text-sm text-nowrap"
+        >
           🗑️ Clear All
         </button>
 
         <Slider
+          min={5}
           tooltip={{ open: false }}
           onChange={setPenSizeValue}
           value={penSizeValue}
-          style={{width: '10rem'}}
+          style={{ width: "10rem" }}
         />
         {/* <Slider
             value={penSizeValue}
@@ -128,6 +156,7 @@ function App() {
         width={innerWidth * 3}
         height={innerHeight * 2}
         style={{ border: "1px solid black", cursor: "crosshair" }}
+        className="overflow-scroll"
       />
     </div>
   );
