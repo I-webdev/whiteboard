@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 // import { PrimeReactProvider, PrimeReactContext } from "primereact/api";
 import "primereact/resources/themes/lara-light-cyan/theme.css";
 import './index.css'
+import './overideStyle.css'
 import App from './App.tsx'
 
 createRoot(document.getElementById("root")!).render(

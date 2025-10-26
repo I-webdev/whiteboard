@@ -1,17 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { Slider } from "antd";
-// import { Slider, type SliderChangeEvent } from "primereact/slider";
 import "primereact/resources/themes/lara-light-cyan/theme.css";
-import eraseIcon from "./assets/svg/Erase.svg";
-import writeIcon from "./assets/svg/write.svg";
-import mobileScrollIcon from "./assets/PNG/mobile-Scroll.png";
+import deleteIcon from "./assets/svg/DeleteIcon.svg";
+import { Erase } from "./components/icons/Erase";
+import { ScrollIcon } from "./components/icons/ScrollIcon";
+import { WriteIcon } from "./components/icons/WriteIcon";
+import eraseIconScreen from "./assets/PNG/eraser.png";
+import penIcon from "./assets/PNG/pen.png";
 function App() {
   const myCanvas = useRef<HTMLCanvasElement>(null);
-  const d = useRef(false);
+  const drawing = useRef(false);
   const [isErasing, setIsErasing] = useState(false);
+  const [isWriting, setIsWriting] = useState(true);
   const [isScrolling, setIsScrolling] = useState(false);
   const [isclearAll, setIsclearAll] = useState<boolean>(false);
   const [penSizeValue, setPenSizeValue] = useState<number>(5);
+  console.log(eraseIconScreen, "penIcon");
+  console.log(penIcon, "penIcon");
 
   useEffect(() => {
     const canvasElement = myCanvas.current;
@@ -67,38 +72,35 @@ function App() {
       const previousOperation = ctx.globalCompositeOperation;
       ctx.globalCompositeOperation = "destination-out";
       ctx.beginPath();
-      ctx.arc(x, y, 30, 0, 2 * Math.PI);
+      ctx.arc(x, y, 20, 0, 2 * Math.PI);
       ctx.fill();
       ctx.globalCompositeOperation = previousOperation;
     };
 
     const handlePointerDown = (e: PointerEvent) => {
       if (isScrolling && canvasElement) {
-        // canvasElement.style.touchAction = "auto";
         return;
       }
-      d.current = true;
+      drawing.current = true;
       isFirstPoint = true;
-      // if (canvasElement) canvasElement.style.touchAction = "none";
 
       if (isErasing) {
         erase(e.offsetX, e.offsetY);
-      } else {
+      } else if (isWriting) {
         drawPoint(e.offsetX, e.offsetY);
       }
     };
 
     const handlePointerMove = (e: PointerEvent) => {
       if (isScrolling && canvasElement) {
-        // canvasElement.style.touchAction = "auto";
         return;
       }
-      // if (canvasElement) canvasElement.style.touchAction = "none";
-      if (!d.current) return;
+
+      if (!drawing.current) return;
 
       if (isErasing) {
         erase(e.offsetX, e.offsetY);
-      } else {
+      } else if (isWriting) {
         if (isFirstPoint) {
           lastPos.x = e.offsetX;
           lastPos.y = e.offsetY;
@@ -113,7 +115,7 @@ function App() {
     };
 
     const handlePointerUp = () => {
-      d.current = false;
+      drawing.current = false;
       saveDrawing();
     };
 
@@ -126,49 +128,81 @@ function App() {
       canvasElement.removeEventListener("pointermove", handlePointerMove);
       canvasElement.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [isErasing, penSizeValue, isScrolling, isclearAll]);
+  }, [isErasing, isWriting, penSizeValue, isScrolling, isclearAll]);
 
-  const toggleEraseMode = () => {
-    setIsErasing((prev) => !prev);
+  const eraseMode = () => {
+    setIsErasing(true);
+    setIsWriting(false);
     setIsScrolling(false);
+  };
+  const writeMode = () => {
+    setIsWriting(true);
+    setIsScrolling(false);
+    setIsErasing(false);
   };
 
   const clearCanvas = () => {
     const ctx = myCanvas.current?.getContext("2d");
     if (ctx && myCanvas.current) {
-      // const previousOperation = ctx.globalCompositeOperation;
-      // ctx.globalCompositeOperation = "destination-out";
-      // ctx.fillRect(0, 0, myCanvas.current.width, myCanvas.current.height);
-      // ctx.globalCompositeOperation = previousOperation;
-      ctx.clearRect(0, 0, myCanvas.current.width, myCanvas.current.height);
+      const previousOperation = ctx.globalCompositeOperation;
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.fillRect(0, 0, myCanvas.current.width, myCanvas.current.height);
+      ctx.globalCompositeOperation = previousOperation;
       setIsclearAll(true);
+      setIsWriting(true);
+      setIsScrolling(false);
     }
   };
+  let cursorStyle = "pointer"; // default
+
+  if (isErasing) {
+    cursorStyle = `url('${eraseIconScreen}') 15 15, auto`;
+  } else if (isWriting) {
+    cursorStyle = `url('${penIcon}') 3 21, auto`;
+  }
 
   return (
     <div className="relative overflow-auto">
-      <div
-        className="fixed top-0 left-0 right-0 bg-gray-400 flex gap-7 sm:gap-10 h-10 pl-10 items-center  bg-red-70"
-        style={{ marginBottom: "10px" }}
-      >
+      <div className="fixed top-0 left-0 right-0 bg-[#1a1a2e] mb-2.5 flex gap-4  sm:gap-10 h-14 sm:pl-3 items-center max-sm:justify-evenly">
         <button
-          onClick={toggleEraseMode}
-          className="border border-gray-200 p-1 rounded-sm"
+          onClick={writeMode}
+          className="border border-[#2d3748] p-1 rounded-sm"
         >
-          <img src={isErasing ? writeIcon : eraseIcon} alt="" />
-          {/* {isErasing ? "✏️ Draw Mode" : "🧹 Erase Mode"} */}
+          <WriteIcon
+            width="w-7"
+            height="h-7"
+            color={isWriting ? `#6366f1` : "#e2e8f0"}
+          />
         </button>
         <button
-          onClick={() => setIsScrolling(true)}
-          className="border border-gray-200 p-1 rounded-sm"
+          onClick={eraseMode}
+          className="border  border-[#2d3748] p-1 rounded-sm"
         >
-          <img className="h-6 w-6 " src={mobileScrollIcon} alt="" />
+          <Erase
+            width="w-7"
+            height="h-7"
+            color={isErasing ? `#6366f1` : "#e2e8f0"}
+          />
+        </button>
+        <button
+          onClick={() => {
+            setIsScrolling(true);
+            setIsErasing(false);
+            setIsWriting(false);
+          }}
+          className="border border-[#2d3748] p-1 rounded-sm sm:hidden"
+        >
+          <ScrollIcon
+            width="h-7"
+            height="h-7"
+            color={isScrolling ? `#6366f1` : "#e2e8f0"}
+          />
         </button>
         <button
           onClick={clearCanvas}
-          className=" border border-gray-200  p-1 rounded-sm text-sm text-nowrap"
+          className=" border border-[#2d3748] flex gap-1 items-center  p-1 rounded-sm text-sm text-nowrap"
         >
-          🗑️ Clear All
+          <img src={deleteIcon} alt="" className="h-7 w-7" />
         </button>
 
         <Slider
@@ -176,19 +210,18 @@ function App() {
           tooltip={{ open: false }}
           onChange={setPenSizeValue}
           value={penSizeValue}
-          style={{ width: "10rem" }}
+          className="sm:w-80 w-32"
         />
-        {/* <Slider
-            value={penSizeValue}
-            onChange={(e: SliderChangeEvent) => setPenSizeValue(e.value)}
-            className=""
-          /> */}
       </div>
       <canvas
         ref={myCanvas}
         width={innerWidth * 3}
         height={innerHeight * 2}
-        style={{ border: "1px solid black", cursor: "crosshair" }}
+        style={{
+          border: "1px solid black",
+
+          cursor: cursorStyle,
+        }}
         className="overflow-scroll"
       />
     </div>
