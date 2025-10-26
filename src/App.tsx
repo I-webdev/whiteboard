@@ -15,8 +15,6 @@ function App() {
   const [isScrolling, setIsScrolling] = useState(false);
   const [isclearAll, setIsclearAll] = useState<boolean>(false);
   const [penSizeValue, setPenSizeValue] = useState<number>(5);
-  console.log(eraseIconScreen, "penIcon");
-  console.log(penIcon, "penIcon");
 
   useEffect(() => {
     const canvasElement = myCanvas.current;
