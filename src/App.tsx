@@ -17,15 +17,15 @@ function App() {
     const canvasElement = myCanvas.current;
     const ctx = canvasElement?.getContext("2d");
     if (!ctx || !canvasElement) return;
-     const saveDrawing = () => {
-       try {
-         const dataURL = canvasElement.toDataURL("image/png");
-         localStorage.setItem("canvas-drawing", dataURL);
-       } catch (error) {
-         console.error("Failed to save drawing:", error);
-       }
-     };
-      if (isclearAll) saveDrawing();
+    const saveDrawing = () => {
+      try {
+        const dataURL = canvasElement.toDataURL("image/png");
+        localStorage.setItem("canvas-drawing", dataURL);
+      } catch (error) {
+        console.error("Failed to save drawing:", error);
+      }
+    };
+    if (isclearAll) saveDrawing();
     const loadDrawing = () => {
       try {
         const savedDrawing = localStorage.getItem("canvas-drawing");
@@ -111,13 +111,12 @@ function App() {
         lastPos.y = e.offsetY;
       }
     };
-   
 
     const handlePointerUp = () => {
       d.current = false;
       saveDrawing();
     };
-  
+
     canvasElement.addEventListener("pointerdown", handlePointerDown);
     canvasElement.addEventListener("pointermove", handlePointerMove);
     canvasElement.addEventListener("pointerup", handlePointerUp);
@@ -191,9 +190,7 @@ function App() {
         height={innerHeight * 2}
         style={{ border: "1px solid black", cursor: "crosshair" }}
         className="overflow-scroll"
-      >
-        <p className="text-black">xdd</p>
-      </canvas>
+      />
     </div>
   );
 }
