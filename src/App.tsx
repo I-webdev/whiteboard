@@ -10,26 +10,53 @@ function App() {
   const d = useRef(false);
   const [isErasing, setIsErasing] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
+  const [isclearAll, setIsclearAll] = useState<boolean>(false);
   const [penSizeValue, setPenSizeValue] = useState<number>(5);
 
   useEffect(() => {
     const canvasElement = myCanvas.current;
     const ctx = canvasElement?.getContext("2d");
     if (!ctx || !canvasElement) return;
+     const saveDrawing = () => {
+       try {
+         const dataURL = canvasElement.toDataURL("image/png");
+         localStorage.setItem("canvas-drawing", dataURL);
+       } catch (error) {
+         console.error("Failed to save drawing:", error);
+       }
+     };
+      if (isclearAll) saveDrawing();
+    const loadDrawing = () => {
+      try {
+        const savedDrawing = localStorage.getItem("canvas-drawing");
+        if (savedDrawing) {
+          const img = new Image();
+          img.onload = () => {
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = savedDrawing;
+        }
+      } catch (error) {
+        console.log("No saved drawing found");
+      }
+    };
 
+    loadDrawing();
+    canvasElement.style.touchAction = isScrolling ? "auto" : "none";
     let lastPos = { x: 0, y: 0 };
     let isFirstPoint = true;
 
     const drawPoint = (x: number, y: number) => {
       ctx.beginPath();
-      ctx.arc(x, y, 2, 0, 2 * Math.PI);
+      ctx.arc(x, y, 0, 0, 2 * Math.PI);
+
       ctx.fill();
     };
 
     const drawLine = (x1: number, y1: number, x2: number, y2: number) => {
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      ctx.lineWidth = penSizeValue;
+      ctx.lineWidth = penSizeValue / 2;
       ctx.beginPath();
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
@@ -47,12 +74,12 @@ function App() {
 
     const handlePointerDown = (e: PointerEvent) => {
       if (isScrolling && canvasElement) {
-        canvasElement.style.touchAction = "auto";
+        // canvasElement.style.touchAction = "auto";
         return;
       }
       d.current = true;
       isFirstPoint = true;
-      if (canvasElement) canvasElement.style.touchAction = "none";
+      // if (canvasElement) canvasElement.style.touchAction = "none";
 
       if (isErasing) {
         erase(e.offsetX, e.offsetY);
@@ -63,10 +90,10 @@ function App() {
 
     const handlePointerMove = (e: PointerEvent) => {
       if (isScrolling && canvasElement) {
-        canvasElement.style.touchAction = "auto";
+        // canvasElement.style.touchAction = "auto";
         return;
       }
-      if (canvasElement) canvasElement.style.touchAction = "none";
+      // if (canvasElement) canvasElement.style.touchAction = "none";
       if (!d.current) return;
 
       if (isErasing) {
@@ -84,11 +111,13 @@ function App() {
         lastPos.y = e.offsetY;
       }
     };
+   
 
     const handlePointerUp = () => {
       d.current = false;
+      saveDrawing();
     };
-
+  
     canvasElement.addEventListener("pointerdown", handlePointerDown);
     canvasElement.addEventListener("pointermove", handlePointerMove);
     canvasElement.addEventListener("pointerup", handlePointerUp);
@@ -98,7 +127,7 @@ function App() {
       canvasElement.removeEventListener("pointermove", handlePointerMove);
       canvasElement.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [isErasing, penSizeValue, isScrolling]);
+  }, [isErasing, penSizeValue, isScrolling, isclearAll]);
 
   const toggleEraseMode = () => {
     setIsErasing((prev) => !prev);
@@ -108,14 +137,19 @@ function App() {
   const clearCanvas = () => {
     const ctx = myCanvas.current?.getContext("2d");
     if (ctx && myCanvas.current) {
+      // const previousOperation = ctx.globalCompositeOperation;
+      // ctx.globalCompositeOperation = "destination-out";
+      // ctx.fillRect(0, 0, myCanvas.current.width, myCanvas.current.height);
+      // ctx.globalCompositeOperation = previousOperation;
       ctx.clearRect(0, 0, myCanvas.current.width, myCanvas.current.height);
+      setIsclearAll(true);
     }
   };
 
   return (
     <div className="relative overflow-auto">
       <div
-        className="fixed top-0 bg-gray-400 flex gap-7 sm:gap-10 h-10 pl-10 items-center  bg-red-70"
+        className="fixed top-0 left-0 right-0 bg-gray-400 flex gap-7 sm:gap-10 h-10 pl-10 items-center  bg-red-70"
         style={{ marginBottom: "10px" }}
       >
         <button
@@ -157,7 +191,9 @@ function App() {
         height={innerHeight * 2}
         style={{ border: "1px solid black", cursor: "crosshair" }}
         className="overflow-scroll"
-      />
+      >
+        <p className="text-black">xdd</p>
+      </canvas>
     </div>
   );
 }
